@@ -124,7 +124,7 @@ export async function POST(req: Request) {
         
         if (chunkText.length > 20) { // Skip trivial chunks
           chunks.push({
-            id: `${docId}_c${chunkIndex}`,
+            id: crypto.randomUUID(),
             docName,
             text: chunkText,
             page: pageNum,
@@ -140,7 +140,7 @@ export async function POST(req: Request) {
     // If no chunks were created, fallback to treating document as a single chunk
     if (chunks.length === 0 && rawText.trim().length > 0) {
       chunks.push({
-        id: `${docId}_c0`,
+        id: crypto.randomUUID(),
         docName,
         text: rawText.replace(/\s+/g, ' ').trim().slice(0, chunkSize),
         page: 1,

@@ -102,6 +102,22 @@ export class VectorStoreService {
         })
         console.log(`[Qdrant] Collection '${this.collectionName}' created successfully.`)
       }
+      // Ensure payload indexes are created for strict mode
+      try {
+        await this.client.createPayloadIndex(this.collectionName, {
+          field_name: 'userId',
+          field_schema: 'keyword',
+          wait: true,
+        })
+        await this.client.createPayloadIndex(this.collectionName, {
+          field_name: 'docId',
+          field_schema: 'keyword',
+          wait: true,
+        })
+        console.log(`[Qdrant] Payload indexes for userId and docId verified/created.`)
+      } catch (idxErr: any) {
+        console.error('[Qdrant] Error creating payload indexes:', idxErr.message)
+      }
     } catch (err) {
       console.error('[Qdrant] Failed to initialize Qdrant collection:', err)
     }
@@ -180,8 +196,8 @@ export class VectorStoreService {
 
     if (this.client) {
       try {
-        const results = await this.client.search(this.collectionName, {
-          vector: queryVector,
+        const results = await this.client.query(this.collectionName, {
+          query: queryVector,
           filter: {
             must: [
               { key: 'userId', match: { value: userId } },
@@ -191,7 +207,7 @@ export class VectorStoreService {
           with_payload: true,
         })
         
-        return results.map((r) => r.payload as ChunkPayload)
+        return results.points.map((r) => r.payload as ChunkPayload)
       } catch (err) {
         console.error('[Qdrant] Search failed, falling back to local memory store search:', err)
         return this.searchMock(userId, queryVector, limit)
