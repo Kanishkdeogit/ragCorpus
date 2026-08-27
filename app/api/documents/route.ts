@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getDb } from '@/lib/db/turso'
 import { getSessionUser } from '@/lib/auth/session'
 import { vectorStore } from '@/lib/vector/qdrant'
-import { PDFParse } from 'pdf-parse'
+import pdf from 'pdf-parse'
 import { crypto } from 'next/dist/compiled/@edge-runtime/primitives'
 
 export const maxDuration = 60 // Allow 60s for large files parsing
@@ -89,8 +89,7 @@ export async function POST(req: Request) {
     
     let pdfData
     try {
-      const parser = new PDFParse({ data: buffer })
-      pdfData = await parser.getText()
+      pdfData = await pdf(buffer)
     } catch (parseErr) {
       console.error('[PDF Parse Error]:', parseErr)
       await db.execute({
@@ -101,7 +100,7 @@ export async function POST(req: Request) {
     }
 
     const rawText = pdfData.text || ''
-    const totalPages = pdfData.total || 1
+    const totalPages = pdfData.numpages || 1
 
     // Chunking text
     // Split by form-feed (default page separator in pdf-parse)
